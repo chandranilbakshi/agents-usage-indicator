@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="agents-usage-indicator">
+  <schema id="org.gnome.shell.extensions.agents-usage-indicator"
+          path="/org/gnome/shell/extensions/agents-usage-indicator/">
+
+    <!-- General -->
+    <key name="refresh-interval" type="i">
+      <default>300</default>
+      <summary>Refresh interval in seconds</summary>
+      <description>How often to poll usage APIs (10-600 seconds)</description>
+    </key>
+
+    <key name="enabled-providers" type="as">
+      <default>['claude', 'codex']</default>
+      <summary>Enabled agent providers</summary>
+      <description>List of provider IDs to display</description>
+    </key>
+
+    <!-- Panel Display -->
+    <key name="display-mode" type="s">
+      <default>'both'</default>
+      <summary>Panel display mode</summary>
+      <description>How to display usage in the panel: 'text' for percentage, 'bar' for progress bar, 'both' for both</description>
+    </key>
+
+    <key name="show-icon" type="b">
+      <default>true</default>
+      <summary>Show icon in panel</summary>
+      <description>Whether to show the icon in the top bar</description>
+    </key>
+
+    <key name="panel-display-source" type="s">
+      <default>'worst'</default>
+      <summary>Panel display source</summary>
+      <description>What to show in the panel: 'worst' for highest utilization across all agents, or a specific provider ID</description>
+    </key>
+
+    <!-- Per-provider credential paths -->
+    <key name="claude-credentials-path" type="s">
+      <default>''</default>
+      <summary>Custom Claude credentials path</summary>
+      <description>Custom path to Claude credentials file. Leave empty for default (~/.claude/.credentials.json)</description>
+    </key>
+
+    <key name="codex-credentials-path" type="s">
+      <default>''</default>
+      <summary>Custom Codex credentials path</summary>
+      <description>Custom path to Codex auth file. Leave empty for default (~/.codex/auth.json)</description>
+    </key>
+
+  </schema>
+</schemalist>

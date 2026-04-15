@@ -1,0 +1,8 @@
+{
+  "name": "Agents Usage Indicator",
+  "description": "Track usage quotas for multiple AI coding agents (Claude Code, Codex, and more) in the GNOME top panel.",
+  "uuid": "agents-usage-indicator@github.io",
+  "shell-version": ["45", "46", "47", "48"],
+  "settings-schema": "org.gnome.shell.extensions.agents-usage-indicator",
+  "version": 1
+}

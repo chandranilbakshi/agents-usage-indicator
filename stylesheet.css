@@ -1,0 +1,151 @@
+/* Panel button styles */
+.agent-icon {
+    margin-right: 6px;
+}
+
+.agent-usage-label {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Panel progress bar */
+.agent-panel-progress-bg {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    height: 10px;
+    width: 50px;
+    margin-left: 4px;
+}
+
+.agent-panel-progress-bar {
+    height: 10px;
+    border-radius: 3px;
+    transition: width 300ms ease-out;
+    background-color: #ffffff;
+}
+
+/* Agent section in dropdown */
+.agent-section {
+    padding: 4px 0;
+    spacing: 6px;
+    min-width: 240px;
+}
+
+.agent-header-box {
+    spacing: 8px;
+    padding: 2px 0;
+}
+
+.agent-header-icon {
+    icon-size: 16px;
+}
+
+.agent-name-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.agent-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+}
+
+.agent-status-dot.status-ok {
+    background-color: #22c55e;
+}
+
+.agent-status-dot.status-error {
+    background-color: #ef4444;
+}
+
+.agent-status-dot.status-unconfigured {
+    background-color: #6b7280;
+}
+
+/* Usage window row */
+.agent-window-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+.agent-percent-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* Progress bar styles */
+.agent-progress-bg {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    height: 8px;
+    width: 200px;
+    margin: 4px 0;
+}
+
+.agent-progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    transition: width 300ms ease-out;
+}
+
+.agent-progress-bar.usage-low {
+    background-color: #22c55e;
+}
+
+.agent-progress-bar.usage-medium {
+    background-color: #eab308;
+}
+
+.agent-progress-bar.usage-high {
+    background-color: #f97316;
+}
+
+.agent-progress-bar.usage-critical {
+    background-color: #ef4444;
+}
+
+/* Reset label */
+.agent-reset-label {
+    font-size: 11px;
+    color: #a0a0a0;
+}
+
+/* Error/status message in section */
+.agent-status-message {
+    font-size: 12px;
+    font-style: italic;
+    color: #a0a0a0;
+    padding: 4px 0;
+}
+
+/* Footer styles */
+.agent-footer-box {
+    padding: 6px 0;
+    spacing: 12px;
+}
+
+.agent-refresh-button {
+    padding: 4px 12px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 12px;
+}
+
+.agent-refresh-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.agent-refresh-button:active {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.agent-last-updated-label {
+    font-size: 10px;
+    font-style: italic;
+    color: #808080;
+}

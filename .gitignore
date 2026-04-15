@@ -1,0 +1,16 @@
+# GNOME Extension packed zips
+*.zip
+
+# Compiled schemas
+schemas/gschemas.compiled
+
+# Editor directories and system files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node modules (if any tooling is added later)
+node_modules/

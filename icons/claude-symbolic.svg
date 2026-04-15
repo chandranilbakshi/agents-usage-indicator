@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Stylized 'C' representing Claude -->
+  <path d="M8 1C4.134 1 1 4.134 1 8s3.134 7 7 7 7-3.134 7-7S11.866 1 8 1zm0 2c2.761 0 5 2.239 5 5s-2.239 5-5 5-5-2.239-5-5 2.239-5 5-5z" fill="currentColor" opacity="0.3"/>
+  <path d="M10.5 5.5A3.5 3.5 0 0 0 8 4.5 3.5 3.5 0 0 0 4.5 8 3.5 3.5 0 0 0 8 11.5a3.5 3.5 0 0 0 2.5-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
