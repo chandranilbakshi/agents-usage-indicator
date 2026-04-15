@@ -70,38 +70,27 @@ class AgentsUsageIndicator extends PanelMenu.Button {
             style_class: 'panel-status-menu-box',
         });
         this.add_child(this._panelBox);
-
-        // Icon
+        this._panelItems = new Map();
+        
+        // Generic items for when no providers are configured
+        this._genericBox = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER });
+        this._panelBox.add_child(this._genericBox);
+        
         this._panelIcon = new St.Icon({
             gicon: Gio.FileIcon.new(
                 Gio.File.new_for_path(`${this._extensionPath}/icons/agents-symbolic.svg`)
             ),
             style_class: 'system-status-icon agent-icon',
         });
-        this._panelBox.add_child(this._panelIcon);
-
-        // Progress bar background
-        this._panelProgressBg = new St.Widget({
-            style_class: 'agent-panel-progress-bg',
-            y_align: Clutter.ActorAlign.CENTER,
-        });
-        this._panelBox.add_child(this._panelProgressBg);
-
-        // Progress bar fill
-        this._panelProgressBar = new St.Widget({
-            style_class: 'agent-panel-progress-bar',
-        });
-        this._panelProgressBg.add_child(this._panelProgressBar);
-
-        // Label
+        this._genericBox.add_child(this._panelIcon);
+        
         this._panelLabel = new St.Label({
             text: '—',
             style_class: 'agent-usage-label',
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this._panelBox.add_child(this._panelLabel);
+        this._genericBox.add_child(this._panelLabel);
 
-        // Apply display mode
         this._applyDisplayMode();
     }
 
@@ -251,51 +240,105 @@ class AgentsUsageIndicator extends PanelMenu.Button {
     }
 
     _updatePanel() {
-        const source = this._settings.get_string('panel-display-source');
+        const mode = this._settings.get_string('display-mode');
+        const showIcon = this._settings.get_boolean('show-icon');
 
-        let utilization = null;
+        const activeProviders = this._providers.filter(e => e.provider.isConfigured());
 
-        if (source === 'worst') {
-            // Find highest 5-hour utilization across all providers
-            for (const entry of this._providers) {
-                if (!entry.windows) continue;
-                for (const win of entry.windows) {
-                    if (win.id === 'five_hour') {
-                        if (utilization === null || win.utilization > utilization)
-                            utilization = win.utilization;
-                    }
-                }
+        if (activeProviders.length === 0) {
+            this._genericBox.visible = true;
+            this._panelIcon.visible = showIcon;
+            this._panelLabel.visible = (mode === 'text' || mode === 'both');
+            
+            // Hide all individual provider boxes
+            for (const item of this._panelItems.values()) {
+                item.box.visible = false;
             }
-        } else {
-            // Specific provider
-            const entry = this._providers.find(e => e.provider.id === source);
-            if (entry?.windows) {
-                const fiveHour = entry.windows.find(w => w.id === 'five_hour');
-                if (fiveHour)
-                    utilization = fiveHour.utilization;
-            }
+            return;
         }
 
-        if (utilization !== null) {
-            const pct = Math.max(0, Math.min(100, utilization));
-            this._panelLabel.text = `${Math.round(pct)}%`;
-            this._panelProgressBar.width = Math.round(pct * 0.5); // 50px max
-            this._panelProgressBar.style_class =
-                `agent-panel-progress-bar ${getPanelUsageClass(pct)}`;
-        } else {
-            this._panelLabel.text = '—';
-            this._panelProgressBar.width = 0;
-            this._panelProgressBar.style_class = 'agent-panel-progress-bar';
+        this._genericBox.visible = false;
+
+        // Ensure we have UI elements for all active providers
+        let i = 0;
+        for (const entry of activeProviders) {
+            let items = this._panelItems.get(entry.provider.id);
+            if (!items) {
+                const box = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER });
+                
+                const icon = new St.Icon({
+                    gicon: Gio.FileIcon.new(
+                        Gio.File.new_for_path(`${this._extensionPath}/icons/${entry.provider.iconName}`)
+                    ),
+                    style_class: 'system-status-icon agent-icon',
+                });
+                box.add_child(icon);
+                
+                const progressBg = new St.Widget({
+                    style_class: 'agent-panel-progress-bg',
+                    y_align: Clutter.ActorAlign.CENTER,
+                });
+                const progressBar = new St.Widget({
+                    style_class: 'agent-panel-progress-bar',
+                });
+                progressBg.add_child(progressBar);
+                box.add_child(progressBg);
+                
+                const label = new St.Label({
+                    text: '—',
+                    style_class: 'agent-usage-label',
+                    y_align: Clutter.ActorAlign.CENTER,
+                });
+                box.add_child(label);
+                
+                this._panelBox.add_child(box);
+                
+                items = { box, icon, progressBg, progressBar, label };
+                this._panelItems.set(entry.provider.id, items);
+            }
+
+            items.box.visible = true;
+            if (i > 0) {
+                items.box.style = 'margin-left: 8px;';
+            } else {
+                items.box.style = '';
+            }
+
+            items.icon.visible = showIcon;
+            items.progressBg.visible = (mode === 'bar' || mode === 'both');
+            items.label.visible = (mode === 'text' || mode === 'both');
+
+            let utilization = null;
+            if (entry.windows) {
+                // Determine usage based on what's available
+                const fiveHour = entry.windows.find(w => w.id === 'five_hour');
+                const highest = entry.windows.reduce((max, w) => w.utilization > max.utilization ? w : max, entry.windows[0]);
+                utilization = fiveHour ? fiveHour.utilization : (highest ? highest.utilization : null);
+            }
+
+            if (utilization !== null) {
+                const pct = Math.max(0, Math.min(100, utilization));
+                items.label.text = `${Math.round(pct)}%`;
+                items.progressBar.width = Math.round(pct * 0.5); // 50px max
+                items.progressBar.style_class = `agent-panel-progress-bar ${getPanelUsageClass(pct)}`;
+            } else {
+                items.label.text = '—';
+                items.progressBar.width = 0;
+                items.progressBar.style_class = 'agent-panel-progress-bar';
+            }
+            i++;
+        }
+
+        // Hide boxes for providers that are no longer active
+        for (const [id, items] of this._panelItems.entries()) {
+            if (!activeProviders.find(e => e.provider.id === id)) {
+                items.box.visible = false;
+            }
         }
     }
 
     _applyDisplayMode() {
-        const mode = this._settings.get_string('display-mode');
-        const showIcon = this._settings.get_boolean('show-icon');
-
-        this._panelIcon.visible = showIcon;
-        this._panelProgressBg.visible = (mode === 'bar' || mode === 'both');
-        this._panelLabel.visible = (mode === 'text' || mode === 'both');
+        this._updatePanel();
     }
 
     _onSettingChanged(key) {
@@ -310,9 +353,6 @@ class AgentsUsageIndicator extends PanelMenu.Button {
         case 'display-mode':
         case 'show-icon':
             this._applyDisplayMode();
-            break;
-        case 'panel-display-source':
-            this._updatePanel();
             break;
         case 'claude-credentials-path':
         case 'codex-credentials-path':

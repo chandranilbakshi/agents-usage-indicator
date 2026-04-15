@@ -39,30 +39,6 @@ export default class AgentsUsagePreferences extends ExtensionPreferences {
         });
         generalGroup.add(refreshRow);
 
-        // Panel display source
-        const sourceGroup = new Adw.PreferencesGroup({
-            title: 'Panel Display',
-        });
-        generalPage.add(sourceGroup);
-
-        const sourceModel = new Gtk.StringList();
-        sourceModel.append('Highest usage');
-        sourceModel.append('Claude Code');
-        sourceModel.append('Codex');
-        const sourceValues = ['worst', 'claude', 'codex'];
-
-        const sourceRow = new Adw.ComboRow({
-            title: 'Panel Value Source',
-            subtitle: 'Which agent\'s usage to show in the top bar',
-            model: sourceModel,
-        });
-        const currentSource = settings.get_string('panel-display-source');
-        sourceRow.selected = Math.max(0, sourceValues.indexOf(currentSource));
-        sourceRow.connect('notify::selected', () => {
-            settings.set_string('panel-display-source', sourceValues[sourceRow.selected]);
-        });
-        sourceGroup.add(sourceRow);
-
         // --- Agents Page ---
         const agentsPage = new Adw.PreferencesPage({
             title: 'Agents',

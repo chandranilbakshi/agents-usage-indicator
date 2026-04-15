@@ -29,12 +29,6 @@
       <description>Whether to show the icon in the top bar</description>
     </key>
 
-    <key name="panel-display-source" type="s">
-      <default>'worst'</default>
-      <summary>Panel display source</summary>
-      <description>What to show in the panel: 'worst' for highest utilization across all agents, or a specific provider ID</description>
-    </key>
-
     <!-- Per-provider credential paths -->
     <key name="claude-credentials-path" type="s">
       <default>''</default>
