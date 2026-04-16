@@ -274,6 +274,13 @@ class AgentsUsageIndicator extends PanelMenu.Button {
                 });
                 box.add_child(icon);
                 
+                const label = new St.Label({
+                    text: '—',
+                    style_class: 'agent-usage-label',
+                    y_align: Clutter.ActorAlign.CENTER,
+                });
+                box.add_child(label);
+                
                 const progressBg = new St.Widget({
                     style_class: 'agent-panel-progress-bg',
                     y_align: Clutter.ActorAlign.CENTER,
@@ -283,13 +290,6 @@ class AgentsUsageIndicator extends PanelMenu.Button {
                 });
                 progressBg.add_child(progressBar);
                 box.add_child(progressBg);
-                
-                const label = new St.Label({
-                    text: '—',
-                    style_class: 'agent-usage-label',
-                    y_align: Clutter.ActorAlign.CENTER,
-                });
-                box.add_child(label);
                 
                 this._panelBox.add_child(box);
                 
