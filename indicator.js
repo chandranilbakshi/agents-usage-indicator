@@ -30,7 +30,7 @@ function getPanelUsageClass(utilization) {
 export const AgentsUsageIndicator = GObject.registerClass(
 class AgentsUsageIndicator extends PanelMenu.Button {
     _init(extensionPath, settings, openPrefsCallback) {
-        super._init(0.0, 'Agents Usage Indicator', false);
+        super._init(0.5, 'Agents Usage Indicator', false);
 
         this._extensionPath = extensionPath;
         this._settings = settings;
