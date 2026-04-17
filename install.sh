@@ -11,12 +11,25 @@ echo "Installing $UUID..."
 echo "  Compiling schemas..."
 glib-compile-schemas "$SCRIPT_DIR/schemas/"
 
-# Create install directory
+# Clean + create install directory
+rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 
-# Copy files
+# Copy only runtime files (exclude dev tooling and tests).
 echo "  Copying files..."
-cp -r "$SCRIPT_DIR"/* "$INSTALL_DIR/"
+rsync -a \
+    --exclude='node_modules' \
+    --exclude='tests' \
+    --exclude='.git' \
+    --exclude='package.json' \
+    --exclude='package-lock.json' \
+    --exclude='eslint.config.js' \
+    --exclude='*.zip' \
+    --exclude='install.sh' \
+    --exclude='README.md' \
+    --exclude='LICENSE' \
+    --exclude='screenshot.png' \
+    "$SCRIPT_DIR/" "$INSTALL_DIR/"
 
 echo ""
 echo "Extension installed to: $INSTALL_DIR"

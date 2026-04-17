@@ -1,6 +1,7 @@
 import GLib from 'gi://GLib';
 
 import {BaseProvider} from './base.js';
+import {parseClaudeResponse} from './parsers.js';
 
 const API_URL = 'https://api.anthropic.com/api/oauth/usage';
 
@@ -50,9 +51,9 @@ export class ClaudeProvider extends BaseProvider {
                 'anthropic-beta': 'oauth-2025-04-20',
             };
 
-            this._httpGet(API_URL, headers, (err, status, data) => {
-                if (err) {
-                    callback(new Error(`API request failed: ${err.message}`), null);
+            this._httpGet(API_URL, headers, (httpErr, status, data) => {
+                if (httpErr) {
+                    callback(new Error(`API request failed: ${httpErr.message}`), null);
                     return;
                 }
                 if (status !== 200) {
@@ -61,57 +62,11 @@ export class ClaudeProvider extends BaseProvider {
                 }
 
                 try {
-                    const windows = this._parseResponse(data);
-                    callback(null, windows);
+                    callback(null, parseClaudeResponse(data));
                 } catch (e) {
                     callback(new Error(`Failed to parse response: ${e.message}`), null);
                 }
             });
         });
-    }
-
-    _parseResponse(data) {
-        const windows = [];
-
-        if (data.five_hour) {
-            windows.push({
-                id: 'five_hour',
-                label: '5-Hour',
-                utilization: this._normalizeUtilization(data.five_hour.utilization),
-                resetsAt: data.five_hour.resets_at ? new Date(data.five_hour.resets_at) : null,
-            });
-        }
-
-        if (data.seven_day) {
-            windows.push({
-                id: 'seven_day',
-                label: '7-Day',
-                utilization: this._normalizeUtilization(data.seven_day.utilization),
-                resetsAt: data.seven_day.resets_at ? new Date(data.seven_day.resets_at) : null,
-            });
-        }
-
-        if (data.seven_day_sonnet) {
-            windows.push({
-                id: 'seven_day_sonnet',
-                label: '7-Day (Sonnet)',
-                utilization: this._normalizeUtilization(data.seven_day_sonnet.utilization),
-                resetsAt: data.seven_day_sonnet.resets_at ? new Date(data.seven_day_sonnet.resets_at) : null,
-            });
-        }
-
-        return windows;
-    }
-
-    /**
-     * Normalize utilization to 0-100 range.
-     * API may return 0-1 (fraction) or 0-100 (percentage).
-     */
-    _normalizeUtilization(value) {
-        if (value == null) return 0;
-        // If value is <= 1.0, treat as fraction and multiply by 100
-        if (value <= 1.0)
-            return value * 100;
-        return Math.min(value, 100);
     }
 }

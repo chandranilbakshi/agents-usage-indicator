@@ -4,34 +4,28 @@ import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-/**
- * Format a duration in milliseconds to a human-readable string.
- * e.g. "2h 15m", "3d 5h", "45m"
- */
-function formatDuration(ms) {
-    if (ms <= 0) return 'now';
-
-    const totalMinutes = Math.floor(ms / 60000);
-    const days = Math.floor(totalMinutes / 1440);
-    const hours = Math.floor((totalMinutes % 1440) / 60);
-    const minutes = totalMinutes % 60;
-
-    const parts = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0) parts.push(`${hours}h`);
-    if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
-
-    return parts.join(' ');
-}
+import {getUsageClass} from './usageClass.js';
+import {clampPercent} from '../providers/parsers.js';
 
 /**
- * Get the CSS class for a utilization level.
+ * Format an absolute reset time as a short local time string.
+ * Dates in the future get "at HH:MM"; same-day past or very recent → "now".
  */
-function getUsageClass(utilization) {
-    if (utilization >= 90) return 'usage-critical';
-    if (utilization >= 70) return 'usage-high';
-    if (utilization >= 40) return 'usage-medium';
-    return 'usage-low';
+function formatResetAt(date) {
+    if (!date) return '';
+    const remaining = date.getTime() - Date.now();
+    if (remaining <= 0) return 'Resetting…';
+    const time = date.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+    // If the reset is more than ~20 hours out, include the weekday so the label
+    // isn't misleading ("Resets at 09:00" without a date).
+    if (remaining > 20 * 3600 * 1000) {
+        const day = date.toLocaleDateString(undefined, {weekday: 'short'});
+        return `Resets ${day} at ${time}`;
+    }
+    return `Resets at ${time}`;
 }
 
 /**
@@ -46,7 +40,6 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         this._displayName = displayName;
         this._iconPath = iconPath;
 
-        // Main vertical container
         this._box = new St.BoxLayout({
             vertical: true,
             style_class: 'agent-section',
@@ -54,7 +47,6 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         });
         this.add_child(this._box);
 
-        // Header row: icon + name + status dot
         this._headerBox = new St.BoxLayout({
             style_class: 'agent-header-box',
             x_expand: true,
@@ -82,14 +74,12 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         });
         this._headerBox.add_child(this._statusDot);
 
-        // Container for usage window rows (built dynamically)
         this._windowsBox = new St.BoxLayout({
             vertical: true,
             x_expand: true,
         });
         this._box.add_child(this._windowsBox);
 
-        // Status message (shown when not configured or error)
         this._statusMessage = new St.Label({
             style_class: 'agent-status-message',
             text: 'Not configured',
@@ -103,7 +93,6 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
      * @param {Error|null} error
      */
     update(windows, error) {
-        // Clear previous window rows
         this._windowsBox.destroy_all_children();
 
         if (error) {
@@ -116,7 +105,6 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
             return;
         }
 
-        // All good
         this._statusDot.style_class = 'agent-status-dot status-ok';
 
         for (const win of windows) {
@@ -137,10 +125,9 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         const container = new St.BoxLayout({
             vertical: true,
             x_expand: true,
-            style: 'padding: 2px 0 6px 0;',
+            style_class: 'agent-window-row',
         });
 
-        // Title + percentage row
         const titleRow = new St.BoxLayout({x_expand: true});
         titleRow.add_child(new St.Label({
             text: win.label,
@@ -153,12 +140,11 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         }));
         container.add_child(titleRow);
 
-        // Progress bar
         const progressBg = new St.Widget({
             style_class: 'agent-progress-bg',
             x_expand: true,
         });
-        const pct = Math.max(0, Math.min(100, win.utilization));
+        const pct = clampPercent(win.utilization);
         const progressBar = new St.Widget({
             style_class: `agent-progress-bar ${getUsageClass(pct)}`,
         });
@@ -167,20 +153,12 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         progressBg.connect('notify::allocation', () => {
             progressBar.width = Math.round(progressBg.width * (pct / 100));
         });
-        if (progressBg.width > 0) {
-            progressBar.width = Math.round(progressBg.width * (pct / 100));
-        }
 
         container.add_child(progressBg);
 
-        // Reset countdown
         if (win.resetsAt) {
-            const remaining = win.resetsAt.getTime() - Date.now();
-            const resetText = remaining > 0
-                ? `Resets in ${formatDuration(remaining)}`
-                : 'Resetting...';
             container.add_child(new St.Label({
-                text: resetText,
+                text: formatResetAt(win.resetsAt),
                 style_class: 'agent-reset-label',
             }));
         }
@@ -188,4 +166,3 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         return container;
     }
 });
-

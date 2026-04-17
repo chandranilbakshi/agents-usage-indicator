@@ -25,6 +25,14 @@
     background-color: #ffffff;
 }
 
+.agent-panel-item-spaced {
+    margin-left: 8px;
+}
+
+.agent-window-row {
+    padding: 2px 0 6px 0;
+}
+
 /* Agent section in dropdown */
 .agent-section {
     padding: 4px 0;

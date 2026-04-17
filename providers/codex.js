@@ -1,6 +1,7 @@
 import GLib from 'gi://GLib';
 
 import {BaseProvider} from './base.js';
+import {parseCodexResponse} from './parsers.js';
 
 const API_URL = 'https://chatgpt.com/backend-api/wham/usage';
 
@@ -52,9 +53,9 @@ export class CodexProvider extends BaseProvider {
             if (accountId)
                 headers['ChatGPT-Account-Id'] = accountId;
 
-            this._httpGet(API_URL, headers, (err, status, data) => {
-                if (err) {
-                    callback(new Error(`API request failed: ${err.message}`), null);
+            this._httpGet(API_URL, headers, (httpErr, status, data) => {
+                if (httpErr) {
+                    callback(new Error(`API request failed: ${httpErr.message}`), null);
                     return;
                 }
                 if (status !== 200) {
@@ -63,73 +64,11 @@ export class CodexProvider extends BaseProvider {
                 }
 
                 try {
-                    const windows = this._parseResponse(data);
-                    callback(null, windows);
+                    callback(null, parseCodexResponse(data));
                 } catch (e) {
                     callback(new Error(`Failed to parse response: ${e.message}`), null);
                 }
             });
         });
-    }
-
-    _parseResponse(data) {
-        const windows = [];
-        const rateLimit = data.rate_limit ?? {};
-
-        const primary = rateLimit.primary_window;
-        if (primary) {
-            windows.push({
-                id: 'five_hour',
-                label: '5-Hour',
-                utilization: this._extractUtilization(primary),
-                resetsAt: this._parseResetTime(primary),
-            });
-        }
-
-        const secondary = rateLimit.secondary_window;
-        if (secondary) {
-            windows.push({
-                id: 'weekly',
-                label: 'Weekly',
-                utilization: this._extractUtilization(secondary),
-                resetsAt: this._parseResetTime(secondary),
-            });
-        }
-
-        return windows;
-    }
-
-    /**
-     * Extract utilization from Codex response.
-     * Codex reports percent_left/remaining_percent, so we invert it.
-     * Also handles usedPercent if present.
-     */
-    _extractUtilization(windowData) {
-        // Actual Codex API field (snake_case)
-        if (windowData.used_percent != null)
-            return Math.min(windowData.used_percent, 100);
-
-        // Fallback: camelCase variant
-        if (windowData.usedPercent != null)
-            return Math.min(windowData.usedPercent, 100);
-
-        // percent_left / remaining_percent: invert to get utilization
-        const left = windowData.percent_left ?? windowData.remaining_percent;
-        if (left != null)
-            return Math.min(100 - left, 100);
-
-        return 0;
-    }
-
-    _parseResetTime(windowData) {
-        const raw = windowData.reset_at ?? windowData.resets_at;
-        if (raw != null) {
-            // API returns Unix seconds; Date() expects milliseconds
-            const ts = raw < 1e12 ? raw * 1000 : raw;
-            return new Date(ts);
-        }
-        if (windowData.reset_time_ms)
-            return new Date(windowData.reset_time_ms);
-        return null;
     }
 }

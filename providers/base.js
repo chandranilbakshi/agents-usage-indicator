@@ -1,84 +1,64 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
-import Soup from 'gi://Soup'; // Used for Soup.Message
+import Soup from 'gi://Soup';
 
 /**
  * Base class for all agent usage providers.
  *
- * Subclasses must override: id, displayName, iconName, fetchUsage(), isConfigured().
- * Shared helpers _readJsonFile() and _httpGet() handle file I/O and HTTP requests.
+ * Subclasses override: id, displayName, iconName, fetchUsage(), isConfigured().
+ * _readJsonFile() and _httpGet() share a per-provider Gio.Cancellable so
+ * in-flight ops are cancelled on destroy() — prevents callbacks touching a
+ * destroyed indicator.
+ *
+ * fetchUsage callback receives (Error|null, UsageWindow[]|null).
+ * UsageWindow = { id: string, label: string, utilization: 0..100, resetsAt: Date|null }
  */
 export class BaseProvider {
-    /**
-     * @param {Gio.Settings} settings - Extension GSettings
-     * @param {Soup.Session} session - Shared Soup session for HTTP requests
-     */
     constructor(settings, session) {
         this._settings = settings;
         this._session = session;
+        this._cancellable = new Gio.Cancellable();
     }
 
-    /** @returns {string} Unique provider identifier (e.g. 'claude') */
     get id() {
         throw new Error('BaseProvider.id not implemented');
     }
 
-    /** @returns {string} Human-readable name (e.g. 'Claude Code') */
     get displayName() {
         throw new Error('BaseProvider.displayName not implemented');
     }
 
-    /** @returns {string} Icon filename in icons/ directory */
     get iconName() {
         throw new Error('BaseProvider.iconName not implemented');
     }
 
-    /**
-     * Fetch current usage data from this agent's API.
-     * @param {function(Error|null, UsageWindow[]|null)} callback
-     *
-     * UsageWindow shape:
-     *   { id: string, label: string, utilization: number (0-100), resetsAt: Date|null }
-     */
-    fetchUsage(callback) {
+    fetchUsage(_callback) {
         throw new Error('BaseProvider.fetchUsage not implemented');
     }
 
-    /** @returns {boolean} Whether credentials are available for this provider */
     isConfigured() {
         return false;
     }
 
-    /**
-     * Read and parse a JSON file asynchronously.
-     * @param {string} path - Absolute file path
-     * @param {function(Error|null, object|null)} callback
-     */
     _readJsonFile(path, callback) {
         const file = Gio.File.new_for_path(path);
-        file.load_contents_async(null, (source, result) => {
+        file.load_contents_async(this._cancellable, (source, result) => {
+            if (this._cancellable.is_cancelled())
+                return;
             try {
                 const [ok, contents] = source.load_contents_finish(result);
                 if (!ok) {
                     callback(new Error(`Failed to read ${path}`), null);
                     return;
                 }
-                const decoder = new TextDecoder('utf-8');
-                const text = decoder.decode(contents);
-                const data = JSON.parse(text);
-                callback(null, data);
+                const text = new TextDecoder('utf-8').decode(contents);
+                callback(null, JSON.parse(text));
             } catch (e) {
                 callback(e, null);
             }
         });
     }
 
-    /**
-     * Make an HTTP GET request and parse JSON response.
-     * @param {string} url - Request URL
-     * @param {Object<string, string>} headers - Request headers
-     * @param {function(Error|null, number, object|null)} callback - (error, statusCode, parsedData)
-     */
     _httpGet(url, headers, callback) {
         const message = Soup.Message.new('GET', url);
         if (!message) {
@@ -87,41 +67,37 @@ export class BaseProvider {
         }
 
         const requestHeaders = message.get_request_headers();
-        for (const [key, value] of Object.entries(headers)) {
+        for (const [key, value] of Object.entries(headers))
             requestHeaders.append(key, value);
-        }
 
         this._session.send_and_read_async(
             message,
             GLib.PRIORITY_DEFAULT,
-            null,
-            (session, result) => {
+            this._cancellable,
+            (_session, result) => {
+                if (this._cancellable.is_cancelled())
+                    return;
+                const statusCode = message.get_status();
                 try {
                     const bytes = this._session.send_and_read_finish(result);
-                    const statusCode = message.get_status();
                     if (!bytes) {
                         callback(new Error('Empty response'), statusCode, null);
                         return;
                     }
-                    const decoder = new TextDecoder('utf-8');
-                    const text = decoder.decode(bytes.get_data());
-                    const data = JSON.parse(text);
-                    callback(null, statusCode, data);
+                    const text = new TextDecoder('utf-8').decode(bytes.get_data());
+                    callback(null, statusCode, JSON.parse(text));
                 } catch (e) {
-                    callback(e, 0, null);
+                    callback(e, statusCode, null);
                 }
             },
         );
     }
 
-    /**
-     * Check if a file exists at the given path.
-     * @param {string} path
-     * @returns {boolean}
-     */
     _fileExists(path) {
         return GLib.file_test(path, GLib.FileTest.EXISTS);
     }
 
-    destroy() {}
+    destroy() {
+        this._cancellable.cancel();
+    }
 }
