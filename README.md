@@ -1,6 +1,6 @@
 # Agents Usage Indicator
 
-A GNOME Shell extension that shows usage quotas for AI coding agents directly in the top panel.
+A GNOME Shell extension that shows usage quotas for supported AI coding agents directly in the top panel.
 
 Currently supported providers:
 
@@ -36,13 +36,13 @@ Default credential file locations:
 
 ```bash
 ./install.sh
-gnome-extensions enable agents-usage-indicator@github.io
+gnome-extensions enable agents-usage-indicator@didmar.github.io
 ```
 
 The install script:
 
 - compiles the extension schema
-- copies the extension into `~/.local/share/gnome-shell/extensions/agents-usage-indicator@github.io`
+- copies the extension into `~/.local/share/gnome-shell/extensions/agents-usage-indicator@didmar.github.io`
 
 After enabling the extension, restart GNOME Shell if needed:
 

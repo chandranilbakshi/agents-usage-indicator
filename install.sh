@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-UUID="agents-usage-indicator@github.io"
+UUID="agents-usage-indicator@didmar.github.io"
 INSTALL_DIR="$HOME/.local/share/gnome-shell/extensions/$UUID"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
