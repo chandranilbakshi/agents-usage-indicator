@@ -11,7 +11,7 @@
     </key>
 
     <key name="enabled-providers" type="as">
-      <default>['claude', 'codex']</default>
+      <default>['claude', 'codex', 'gemini']</default>
       <summary>Enabled agent providers</summary>
       <description>List of provider IDs to display</description>
     </key>
@@ -40,6 +40,12 @@
       <default>''</default>
       <summary>Custom Codex credentials path</summary>
       <description>Custom path to Codex auth file. Leave empty for default (~/.codex/auth.json)</description>
+    </key>
+
+    <key name="gemini-credentials-path" type="s">
+      <default>''</default>
+      <summary>Custom Gemini credentials path</summary>
+      <description>Custom path to Gemini OAuth credentials file. Leave empty for default (~/.gemini/oauth_creds.json)</description>
     </key>
 
   </schema>

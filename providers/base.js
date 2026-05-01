@@ -60,7 +60,15 @@ export class BaseProvider {
     }
 
     _httpGet(url, headers, callback) {
-        const message = Soup.Message.new('GET', url);
+        this._httpRequest('GET', url, headers, null, callback);
+    }
+
+    _httpPost(url, headers, body, callback) {
+        this._httpRequest('POST', url, headers, body, callback);
+    }
+
+    _httpRequest(method, url, headers, body, callback) {
+        const message = Soup.Message.new(method, url);
         if (!message) {
             callback(new Error(`Invalid URL: ${url}`), 0, null);
             return;
@@ -69,6 +77,14 @@ export class BaseProvider {
         const requestHeaders = message.get_request_headers();
         for (const [key, value] of Object.entries(headers))
             requestHeaders.append(key, value);
+
+        if (body != null) {
+            const encoded = new TextEncoder().encode(JSON.stringify(body));
+            message.set_request_body_from_bytes(
+                'application/json',
+                new GLib.Bytes(encoded),
+            );
+        }
 
         this._session.send_and_read_async(
             message,

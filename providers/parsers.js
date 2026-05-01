@@ -65,6 +65,42 @@ export function parseCodexResponse(data) {
     return windows;
 }
 
+/**
+ * Google Code Assist :retrieveUserQuota response → UsageWindow[].
+ * Shape:
+ *   { buckets: [{ modelId, remainingFraction (0..1), resetTime (ISO8601) }, ...] }
+ * Buckets with a 1970 epoch resetTime signal "no quota on current tier" and are skipped.
+ */
+export function parseGeminiResponse(data) {
+    const windows = [];
+    for (const bucket of data?.buckets ?? []) {
+        if (!bucket?.modelId) continue;
+        if (bucket.remainingFraction == null) continue;
+        const resetsAt = parseGeminiResetTime(bucket.resetTime);
+        if (bucket.remainingFraction === 0 && resetsAt === null) continue;
+        windows.push({
+            id: bucket.modelId,
+            label: prettifyGeminiModel(bucket.modelId),
+            utilization: clampPercent((1 - bucket.remainingFraction) * 100),
+            resetsAt,
+        });
+    }
+    return windows;
+}
+
+function parseGeminiResetTime(raw) {
+    if (!raw) return null;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return null;
+    // 1970 epoch → no active reset (quota not allocated on this tier).
+    if (d.getUTCFullYear() < 2000) return null;
+    return d;
+}
+
+function prettifyGeminiModel(id) {
+    return id.replace(/^gemini-/, '');
+}
+
 function parseResetAt(raw) {
     if (raw == null) return null;
     // Unix seconds → ms (guard against callers already passing ms).

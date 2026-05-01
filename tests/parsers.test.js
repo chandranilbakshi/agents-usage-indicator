@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 
-import {parseClaudeResponse, parseCodexResponse} from '../providers/parsers.js';
+import {parseClaudeResponse, parseCodexResponse, parseGeminiResponse} from '../providers/parsers.js';
 
 test('parseClaudeResponse: empty payload → no windows', () => {
     assert.deepEqual(parseClaudeResponse({}), []);
@@ -106,4 +106,69 @@ test('parseCodexResponse: missing used_percent defaults to 0', () => {
         rate_limit: {primary_window: {reset_at: 1744891200}},
     });
     assert.equal(out[0].utilization, 0);
+});
+
+test('parseGeminiResponse: empty/null payload → no windows', () => {
+    assert.deepEqual(parseGeminiResponse({}), []);
+    assert.deepEqual(parseGeminiResponse(null), []);
+    assert.deepEqual(parseGeminiResponse({buckets: []}), []);
+});
+
+test('parseGeminiResponse: buckets map to windows, model prefix stripped', () => {
+    const out = parseGeminiResponse({
+        buckets: [
+            {modelId: 'gemini-2.5-flash', remainingFraction: 0.75, resetTime: '2026-04-20T13:32:05Z'},
+            {modelId: 'gemini-2.5-flash-lite', remainingFraction: 0.25, resetTime: '2026-04-20T13:31:08Z'},
+        ],
+    });
+    assert.equal(out.length, 2);
+    assert.deepEqual(out[0], {
+        id: 'gemini-2.5-flash',
+        label: '2.5-flash',
+        utilization: 25,
+        resetsAt: new Date('2026-04-20T13:32:05Z'),
+    });
+    assert.equal(out[1].label, '2.5-flash-lite');
+    assert.equal(out[1].utilization, 75);
+});
+
+test('parseGeminiResponse: remainingFraction 1 → 0%, 0 (with valid reset) → 100%', () => {
+    const out = parseGeminiResponse({
+        buckets: [
+            {modelId: 'gemini-2.5-flash', remainingFraction: 1, resetTime: '2026-04-20T13:32:05Z'},
+            {modelId: 'gemini-2.5-pro', remainingFraction: 0, resetTime: '2026-04-20T13:32:05Z'},
+        ],
+    });
+    assert.equal(out[0].utilization, 0);
+    assert.equal(out[1].utilization, 100);
+});
+
+test('parseGeminiResponse: epoch resetTime with 0 remaining → skipped (no quota on tier)', () => {
+    const out = parseGeminiResponse({
+        buckets: [
+            {modelId: 'gemini-2.5-pro', remainingFraction: 0, resetTime: '1970-01-01T00:00:00Z'},
+            {modelId: 'gemini-2.5-flash', remainingFraction: 0.5, resetTime: '2026-04-20T13:32:05Z'},
+        ],
+    });
+    assert.equal(out.length, 1);
+    assert.equal(out[0].id, 'gemini-2.5-flash');
+});
+
+test('parseGeminiResponse: missing modelId or remainingFraction is skipped', () => {
+    const out = parseGeminiResponse({
+        buckets: [
+            {remainingFraction: 0.5, resetTime: '2026-04-20T13:32:05Z'},
+            {modelId: 'gemini-2.5-flash', resetTime: '2026-04-20T13:32:05Z'},
+            {modelId: 'gemini-2.5-flash-lite', remainingFraction: 0.1, resetTime: '2026-04-20T13:31:08Z'},
+        ],
+    });
+    assert.equal(out.length, 1);
+    assert.equal(out[0].id, 'gemini-2.5-flash-lite');
+});
+
+test('parseGeminiResponse: missing resetTime → resetsAt null', () => {
+    const out = parseGeminiResponse({
+        buckets: [{modelId: 'gemini-2.5-flash', remainingFraction: 0.5}],
+    });
+    assert.equal(out[0].resetsAt, null);
 });

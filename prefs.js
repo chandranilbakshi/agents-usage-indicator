@@ -98,6 +98,32 @@ export default class AgentsUsagePreferences extends ExtensionPreferences {
         });
         codexGroup.add(codexPathRow);
 
+        // Gemini group
+        const geminiGroup = new Adw.PreferencesGroup({
+            title: 'Gemini',
+        });
+        agentsPage.add(geminiGroup);
+
+        const geminiToggle = new Adw.SwitchRow({
+            title: 'Enabled',
+            subtitle: 'Track Gemini usage',
+        });
+        geminiToggle.active = settings.get_strv('enabled-providers').includes('gemini');
+        geminiToggle.connect('notify::active', () => {
+            this._toggleProvider(settings, 'gemini', geminiToggle.active);
+        });
+        geminiGroup.add(geminiToggle);
+
+        const geminiPathRow = new Adw.EntryRow({
+            title: 'Credentials Path',
+            text: settings.get_string('gemini-credentials-path'),
+        });
+        geminiPathRow.add_suffix(this._createHintLabel('Leave empty for default'));
+        geminiPathRow.connect('changed', () => {
+            settings.set_string('gemini-credentials-path', geminiPathRow.text);
+        });
+        geminiGroup.add(geminiPathRow);
+
         // --- Appearance Page ---
         const appearancePage = new Adw.PreferencesPage({
             title: 'Appearance',

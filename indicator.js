@@ -12,11 +12,13 @@ import {getUsageClass} from './ui/usageClass.js';
 import {pickPanelUtilization} from './ui/panelUtils.js';
 import {ClaudeProvider} from './providers/claude.js';
 import {CodexProvider} from './providers/codex.js';
+import {GeminiProvider} from './providers/gemini.js';
 import {clampPercent} from './providers/parsers.js';
 
 const PROVIDER_REGISTRY = {
     'claude': ClaudeProvider,
     'codex': CodexProvider,
+    'gemini': GeminiProvider,
 };
 
 const PANEL_BAR_MAX_PX = 50;
@@ -335,6 +337,7 @@ class AgentsUsageIndicator extends PanelMenu.Button {
             break;
         case 'claude-credentials-path':
         case 'codex-credentials-path':
+        case 'gemini-credentials-path':
             this._refreshAll();
             break;
         }

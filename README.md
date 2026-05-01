@@ -6,6 +6,7 @@ Currently supported providers:
 
 - Claude Code
 - Codex
+- Gemini
 
 The extension reads your local auth files, polls each provider's usage endpoint, and shows current utilization in the panel and dropdown menu.
 
@@ -31,6 +32,7 @@ Default credential file locations:
 
 - Claude Code: `~/.claude/.credentials.json`
 - Codex: `~/.codex/auth.json`
+- Gemini: `~/.gemini/oauth_creds.json`
 
 ## Install
 
