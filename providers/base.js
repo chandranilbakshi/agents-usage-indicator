@@ -91,15 +91,27 @@ export class BaseProvider {
             GLib.PRIORITY_DEFAULT,
             this._cancellable,
             (_session, result) => {
+                const statusCode = message.get_status();
+                let bytes;
+                try {
+                    // Always finish the async operation, including when it was
+                    // cancelled, so libsoup can release its result resources.
+                    bytes = this._session.send_and_read_finish(result);
+                } catch (e) {
+                    if (this._cancellable.is_cancelled())
+                        return;
+                    callback(e, statusCode, null);
+                    return;
+                }
+
                 if (this._cancellable.is_cancelled())
                     return;
-                const statusCode = message.get_status();
+                if (!bytes) {
+                    callback(new Error('Empty response'), statusCode, null);
+                    return;
+                }
+
                 try {
-                    const bytes = this._session.send_and_read_finish(result);
-                    if (!bytes) {
-                        callback(new Error('Empty response'), statusCode, null);
-                        return;
-                    }
                     const text = new TextDecoder('utf-8').decode(bytes.get_data());
                     callback(null, statusCode, JSON.parse(text));
                 } catch (e) {
