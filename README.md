@@ -24,7 +24,7 @@ The extension reads your local auth files, polls each provider's usage endpoint,
 
 ## Requirements
 
-- GNOME Shell 45, 46, 47, or 48
+- GNOME Shell 45, 46, 47, 48, 49, or 50
 - `glib-compile-schemas`
 - A valid local login for at least one supported provider
 

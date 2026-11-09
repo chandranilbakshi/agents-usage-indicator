@@ -33,6 +33,7 @@ class AgentsUsageIndicator extends PanelMenu.Button {
         this._openPrefsCallback = openPrefsCallback;
         this._timerId = null;
         this._inFlight = false;
+        this._refreshGeneration = 0;
         this._destroyed = false;
 
         this._session = new Soup.Session({timeout: 30});
@@ -127,8 +128,10 @@ class AgentsUsageIndicator extends PanelMenu.Button {
     }
 
     _initProviders() {
-        // Destroy existing providers — their cancellables fire, so in-flight
-        // fetch callbacks never reach the _refreshAll handler below.
+        // Invalidate callbacks from providers being replaced. Their cancellables
+        // may prevent callbacks from firing, so also release the in-flight lock.
+        this._refreshGeneration++;
+        this._inFlight = false;
         for (const entry of this._providers)
             entry.provider.destroy();
         this._providers = [];
@@ -192,8 +195,11 @@ class AgentsUsageIndicator extends PanelMenu.Button {
         }
 
         this._inFlight = true;
+        const generation = ++this._refreshGeneration;
         let pending = this._providers.length;
         const done = () => {
+            if (generation !== this._refreshGeneration)
+                return;
             pending--;
             if (pending === 0) {
                 this._inFlight = false;
@@ -210,6 +216,8 @@ class AgentsUsageIndicator extends PanelMenu.Button {
             }
 
             entry.provider.fetchUsage((error, windows) => {
+                if (generation !== this._refreshGeneration)
+                    return;
                 if (this._destroyed) {
                     done();
                     return;
@@ -345,6 +353,7 @@ class AgentsUsageIndicator extends PanelMenu.Button {
 
     destroy() {
         this._destroyed = true;
+        this._refreshGeneration++;
         this._stopTimer();
 
         if (this._settingsChangedId) {

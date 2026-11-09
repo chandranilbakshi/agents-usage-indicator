@@ -3,6 +3,6 @@
   "description": "Track usage quotas for supported AI coding agents in the GNOME top panel.",
   "uuid": "agents-usage-indicator@didmar.github.io",
   "url": "https://github.com/didmar/agents-usage-indicator",
-  "shell-version": ["46"],
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
   "settings-schema": "org.gnome.shell.extensions.agents-usage-indicator"
 }
