@@ -50,7 +50,7 @@
 }
 
 .agent-name-label {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: #ffffff;
 }
@@ -75,13 +75,13 @@
 
 /* Usage window row */
 .agent-window-title {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: #e0e0e0;
 }
 
 .agent-percent-label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: bold;
     color: #ffffff;
 }
@@ -119,13 +119,13 @@
 
 /* Reset label */
 .agent-reset-label {
-    font-size: 11px;
+    font-size: 12px;
     color: #a0a0a0;
 }
 
 /* Error/status message in section */
 .agent-status-message {
-    font-size: 12px;
+    font-size: 13px;
     font-style: italic;
     color: #a0a0a0;
     padding: 4px 0;
@@ -154,7 +154,7 @@
 }
 
 .agent-last-updated-label {
-    font-size: 10px;
+    font-size: 11px;
     font-style: italic;
     color: #808080;
 }
