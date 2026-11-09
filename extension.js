@@ -9,7 +9,6 @@ export default class AgentsUsageExtension extends Extension {
         this._indicator = new AgentsUsageIndicator(
             this.path,
             this._settings,
-            () => this.openPreferences(),
         );
         Main.panel.addToStatusArea(this.uuid, this._indicator);
     }

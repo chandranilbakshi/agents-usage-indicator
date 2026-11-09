@@ -25,12 +25,11 @@ const PANEL_BAR_MAX_PX = 50;
 
 export const AgentsUsageIndicator = GObject.registerClass(
 class AgentsUsageIndicator extends PanelMenu.Button {
-    _init(extensionPath, settings, openPrefsCallback) {
+    _init(extensionPath, settings) {
         super._init(0.5, 'Agents Usage Indicator', false);
 
         this._extensionPath = extensionPath;
         this._settings = settings;
-        this._openPrefsCallback = openPrefsCallback;
         this._timerId = null;
         this._inFlight = false;
         this._refreshGeneration = 0;
@@ -108,21 +107,15 @@ class AgentsUsageIndicator extends PanelMenu.Button {
         footerBox.add_child(this._lastUpdatedLabel);
 
         const refreshButton = new St.Button({
-            label: '↻ Refresh',
             style_class: 'agent-refresh-button',
+            accessible_name: 'Refresh',
+            child: new St.Icon({
+                icon_name: 'view-refresh-symbolic',
+                style_class: 'system-status-icon',
+            }),
         });
         refreshButton.connect('clicked', () => this._refreshAll());
         footerBox.add_child(refreshButton);
-
-        const settingsButton = new St.Button({
-            label: '⚙ Settings',
-            style_class: 'agent-refresh-button',
-        });
-        settingsButton.connect('clicked', () => {
-            this.menu.close();
-            this._openPrefsCallback?.();
-        });
-        footerBox.add_child(settingsButton);
 
         this.menu.addMenuItem(footerItem);
     }
