@@ -8,24 +8,19 @@ import {getUsageClass} from './usageClass.js';
 import {clampPercent} from '../providers/parsers.js';
 
 /**
- * Format an absolute reset time as a short local time string.
- * Dates in the future get "at HH:MM"; same-day past or very recent → "now".
+ * Format an absolute reset time as the full local date and time.
  */
 function formatResetAt(date) {
-    if (!date) return '';
-    const remaining = date.getTime() - Date.now();
-    if (remaining <= 0) return 'Resetting…';
-    const time = date.toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
+    if (!date) return "";
+    if (date.getTime() <= Date.now()) return "Resetting…";
+
+    const dateTime = date.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
     });
-    // If the reset is more than ~20 hours out, include the weekday so the label
-    // isn't misleading ("Resets at 09:00" without a date).
-    if (remaining > 20 * 3600 * 1000) {
-        const day = date.toLocaleDateString(undefined, {weekday: 'short'});
-        return `Resets ${day} at ${time}`;
-    }
-    return `Resets at ${time}`;
+    return `Resets ${dateTime}`;
 }
 
 /**
@@ -36,9 +31,6 @@ export const AgentSection = GObject.registerClass(
 class AgentSection extends PopupMenu.PopupBaseMenuItem {
     _init(displayName, iconPath) {
         super._init({reactive: false, can_focus: false});
-
-        this._displayName = displayName;
-        this._iconPath = iconPath;
 
         this._box = new St.BoxLayout({
             vertical: true,
@@ -54,11 +46,11 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         this._box.add_child(this._headerBox);
 
         if (iconPath) {
-            this._icon = new St.Icon({
+            const icon = new St.Icon({
                 gicon: Gio.FileIcon.new(Gio.File.new_for_path(iconPath)),
                 style_class: 'agent-header-icon',
             });
-            this._headerBox.add_child(this._icon);
+            this._headerBox.add_child(icon);
         }
 
         this._nameLabel = new St.Label({
@@ -80,11 +72,10 @@ class AgentSection extends PopupMenu.PopupBaseMenuItem {
         });
         this._box.add_child(this._windowsBox);
 
-        this._statusMessage = new St.Label({
+        this._windowsBox.add_child(new St.Label({
             style_class: 'agent-status-message',
             text: 'Not configured',
-        });
-        this._windowsBox.add_child(this._statusMessage);
+        }));
     }
 
     /**
