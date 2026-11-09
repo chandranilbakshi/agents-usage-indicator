@@ -39,7 +39,6 @@ class AgentsUsageIndicator extends PanelMenu.Button {
 
         // Array of { provider, section, windows }
         this._providers = [];
-        this._lastUpdated = null;
 
         this._buildPanel();
         this._buildMenu();
@@ -224,8 +223,8 @@ class AgentsUsageIndicator extends PanelMenu.Button {
     }
 
     _onAllRefreshComplete() {
-        this._lastUpdated = new Date();
-        const timeStr = this._lastUpdated.toLocaleTimeString(undefined, {
+        const updatedAt = new Date();
+        const timeStr = updatedAt.toLocaleTimeString(undefined, {
             hour: '2-digit',
             minute: '2-digit',
         });
