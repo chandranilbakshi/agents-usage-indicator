@@ -111,6 +111,7 @@ class AgentsUsageIndicator extends PanelMenu.Button {
             accessible_name: 'Refresh',
             child: new St.Icon({
                 icon_name: 'view-refresh-symbolic',
+                icon_size: 16,
                 style_class: 'system-status-icon',
             }),
         });
