@@ -47,22 +47,49 @@ export function parseClaudeResponse(data) {
  */
 export function parseCodexResponse(data) {
     const windows = [];
-    const rateLimit = data?.rate_limit ?? {};
-    const mapping = [
-        ['primary_window', 'five_hour', '5-Hour'],
-        ['secondary_window', 'weekly', 'Weekly'],
+    const rateLimit = data?.rate_limit ?? data?.rate_limits ?? {};
+    const candidates = [
+        rateLimit.five_hour,
+        rateLimit.primary_window,
+        rateLimit.primary,
+        rateLimit.weekly,
+        rateLimit.secondary_window,
+        rateLimit.secondary,
     ];
-    for (const [key, id, label] of mapping) {
-        const w = rateLimit[key];
-        if (!w) continue;
+
+    for (const window of candidates) {
+        if (!window || window.used_percent == null)
+            continue;
+
+        const duration = Number(window.limit_window_seconds);
+        const {id, label} = codexWindowType(duration);
         windows.push({
             id,
             label,
-            utilization: clampPercent(w.used_percent),
-            resetsAt: parseResetAt(w.reset_at),
+            utilization: clampPercent(window.used_percent),
+            resetsAt: parseResetAt(window.reset_at),
         });
     }
     return windows;
+}
+
+function codexWindowType(seconds) {
+    if (!Number.isFinite(seconds) || seconds <= 0)
+        return {id: "codex-window", label: "Usage"};
+    if (seconds >= 28 * 86400 && seconds <= 31 * 86400)
+        return {id: "monthly", label: "Monthly"};
+    if (seconds === 18000)
+        return {id: "five_hour", label: "5-Hour"};
+    if (seconds === 604800)
+        return {id: "weekly", label: "Weekly"};
+
+    const hours = seconds / 3600;
+    if (Number.isInteger(hours))
+        return {id: `window-${seconds}`, label: `${hours}-Hour`};
+    const days = seconds / 86400;
+    if (Number.isInteger(days))
+        return {id: `window-${seconds}`, label: `${days}-Day`};
+    return {id: `window-${seconds}`, label: `${Math.round(seconds / 60)}-Minute`};
 }
 
 /**
