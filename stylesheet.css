@@ -133,7 +133,7 @@
 
 /* Footer styles */
 .agent-footer-box {
-    padding: 6px 0;
+    padding: 3px 0 6px;
     spacing: 12px;
 }
 
@@ -149,7 +149,7 @@
 }
 
 .agent-last-updated-label {
-    font-size: 11px;
+    font-size: 12px;
     font-style: italic;
     color: #808080;
 }
