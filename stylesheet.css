@@ -92,7 +92,7 @@
     border-radius: 4px;
     height: 8px;
     width: 200px;
-    margin: 4px 0;
+    margin: 5px 0 4px;
 }
 
 .agent-progress-bar {
